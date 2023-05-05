@@ -39,9 +39,12 @@ fun App() {
 
     GraphView(
 
-        onViewClick = { position: Offset ->
+        onViewClick = { position: Offset, viewState ->
 
-            items.add(GraphItem(position = position) { Card() })
+            val worldPosition = viewState.mousePositionOnWorld(position)
+
+            // TODO: dont need to apply scale to position
+            items.add(GraphItem(position = worldPosition / viewState.scale) { Card() })
 
         }
 

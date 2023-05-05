@@ -3,6 +3,7 @@ package hpn.common.layout
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.onClick
@@ -17,17 +18,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.toSize
 import hpn.common.climb
 import hpn.common.onMouseScroll
 
@@ -61,6 +64,14 @@ import hpn.common.onMouseScroll
         - [x] world
     - [ ] camera?!
 
+# todo
+- [ ] calculate from center of camera
+    - [ ] background
+    - [ ] border
+    - [x] mouse
+        - click point position
+    - [ ] zoom
+
  */
 
 
@@ -73,7 +84,7 @@ inline fun rememberGraphItems() = remember { mutableStateListOf<GraphItem>() }
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun GraphView(
-    onViewClick: (position: Offset) -> Unit,
+    onViewClick: (position: Offset, ViewState) -> Unit,
     content: @Composable() (GraphContentScope.() -> Unit) = {},
 ) {
 
@@ -90,9 +101,9 @@ fun GraphView(
 
     // Center of World:: Top/Right
     val viewState = ViewState(
-        centerWorldOffset = Offset(-offsetXAnimate, -offsetYAnimate),
+        worldOffset = Offset(-offsetXAnimate, -offsetYAnimate),
         screenSize = screenSize,
-        showScale = scaleAnimate
+        scale = scaleAnimate
     )
 
 //    println(viewState)
@@ -104,119 +115,119 @@ fun GraphView(
 
         // background guild line
         // TODO: REMOVE Flicking, make exact
-        Box(modifier = Modifier.fillMaxSize()) {
-
-
-            val offsetEdge = (RepeatOffset * scaleAnimate).toInt()
-            val guildLineDraw = offsetEdge * 10
-
-            val alpha =
-                if (viewState.showScale > 1)
-                    1f
-                else
-                    (if (viewState.showScale <= .2f) 0f else viewState.showScale)
-
-
-
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .drawBehind {
-
-                        val viewScope = viewState.viewYRangeInt
-
-                        for (yIndex in viewScope) {
-
-                            if (yIndex % offsetEdge != 0) {
-                                continue
-                            }
-
-                            val y = yIndex.toFloat() - viewScope.start
-
-
-                            drawLine(
-                                Color.LightGray.copy(alpha = alpha),
-                                start = Offset(x = 0f, y = y),
-                                end = Offset(x = viewState.screenSize.width.toFloat(), y = y),
-                            )
-                        }
-                    }
-            )
-
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .drawBehind {
-
-                        val viewScope = viewState.viewXRangeInt
-
-                        for (xIndex in viewScope) {
-
-                            if (xIndex % offsetEdge != 0) {
-                                continue
-                            }
-
-                            val x = xIndex.toFloat() - viewScope.start
-
-                            drawLine(
-                                Color.LightGray.copy(alpha = alpha),
-                                start = Offset(y = 0f, x = x),
-                                end = Offset(y = viewState.screenSize.width.toFloat(), x = x),
-                            )
-                        }
-                    }
-            )
-
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .drawBehind {
-
-                        val viewScope = viewState.viewYRangeInt
-
-                        for (yIndex in viewScope) {
-
-                            if (yIndex % guildLineDraw != 0) {
-                                continue
-                            }
-
-                            val y = yIndex.toFloat() - viewScope.start
-
-                            drawLine(
-                                Color.Gray,
-                                start = Offset(x = 0f, y = y),
-                                end = Offset(x = viewState.screenSize.width.toFloat(), y = y),
-                            )
-                        }
-                    }
-            )
-
-
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .drawBehind {
-
-                        val viewScope = viewState.viewXRangeInt // with offset
-
-                        for (xIndex in viewScope) {
-
-                            if (xIndex % guildLineDraw != 0) {
-                                continue
-                            }
-
-                            val x = xIndex.toFloat() - viewScope.start
-
-                            drawLine(
-                                Color.Gray,
-                                start = Offset(y = 0f, x = x),
-                                end = Offset(y = viewState.screenSize.width.toFloat(), x = x),
-                            )
-                        }
-                    }
-            )
-
-        }
+//        Box(modifier = Modifier.fillMaxSize()) {
+//
+//
+//            val offsetEdge = (RepeatOffset * scaleAnimate).toInt()
+//            val guildLineDraw = offsetEdge * 10
+//
+//            val alpha =
+//                if (viewState.showScale > 1)
+//                    1f
+//                else
+//                    (if (viewState.showScale <= .2f) 0f else viewState.showScale)
+//
+//
+//
+//            Box(
+//                modifier = Modifier
+//                    .fillMaxSize()
+//                    .drawBehind {
+//
+//                        val viewScope = viewState.viewYRangeInt
+//
+//                        for (yIndex in viewScope) {
+//
+//                            if (yIndex % offsetEdge != 0) {
+//                                continue
+//                            }
+//
+//                            val y = yIndex.toFloat() - viewScope.start
+//
+//
+//                            drawLine(
+//                                Color.LightGray.copy(alpha = alpha),
+//                                start = Offset(x = 0f, y = y),
+//                                end = Offset(x = viewState.screenSize.width.toFloat(), y = y),
+//                            )
+//                        }
+//                    }
+//            )
+//
+//            Box(
+//                modifier = Modifier
+//                    .fillMaxSize()
+//                    .drawBehind {
+//
+//                        val viewScope = viewState.viewXRangeInt
+//
+//                        for (xIndex in viewScope) {
+//
+//                            if (xIndex % offsetEdge != 0) {
+//                                continue
+//                            }
+//
+//                            val x = xIndex.toFloat() - viewScope.start
+//
+//                            drawLine(
+//                                Color.LightGray.copy(alpha = alpha),
+//                                start = Offset(y = 0f, x = x),
+//                                end = Offset(y = viewState.screenSize.width.toFloat(), x = x),
+//                            )
+//                        }
+//                    }
+//            )
+//
+//            Box(
+//                modifier = Modifier
+//                    .fillMaxSize()
+//                    .drawBehind {
+//
+//                        val viewScope = viewState.viewYRangeInt
+//
+//                        for (yIndex in viewScope) {
+//
+//                            if (yIndex % guildLineDraw != 0) {
+//                                continue
+//                            }
+//
+//                            val y = yIndex.toFloat() - viewScope.start
+//
+//                            drawLine(
+//                                Color.Gray,
+//                                start = Offset(x = 0f, y = y),
+//                                end = Offset(x = viewState.screenSize.width.toFloat(), y = y),
+//                            )
+//                        }
+//                    }
+//            )
+//
+//
+//            Box(
+//                modifier = Modifier
+//                    .fillMaxSize()
+//                    .drawBehind {
+//
+//                        val viewScope = viewState.viewXRangeInt // with offset
+//
+//                        for (xIndex in viewScope) {
+//
+//                            if (xIndex % guildLineDraw != 0) {
+//                                continue
+//                            }
+//
+//                            val x = xIndex.toFloat() - viewScope.start
+//
+//                            drawLine(
+//                                Color.Gray,
+//                                start = Offset(y = 0f, x = x),
+//                                end = Offset(y = viewState.screenSize.width.toFloat(), x = x),
+//                            )
+//                        }
+//                    }
+//            )
+//
+//        }
 
         // Touch Control Layout
         Box(
@@ -241,16 +252,7 @@ fun GraphView(
                     mousePositionOnBorder = it.changes.first().position
                 }
                 .onClick {
-
-
-// TODO: set by view offset
-                    val offset = Offset(
-                        x = mousePositionOnBorder.x - offsetXAnimate,
-                        y = mousePositionOnBorder.y - offsetYAnimate
-                    )
-
-                    onViewClick(offset)
-
+                    onViewClick(mousePositionOnBorder, viewState)
                 }
                 .fillMaxSize()
         )
@@ -268,34 +270,93 @@ fun GraphView(
                     content()
 
                 }
+
+                // Center to Center of Camera
+                Box(
+                    modifier = Modifier
+                        .offset(
+                            viewState.viewport.position.x.let { if (it < 0) it else 0f }.dp,
+                            viewState.viewport.position.y.let { if (it < 0) it else 0f }.dp
+                        )
+//                        .scale(viewState.viewport.scale)
+                        .size(
+                            viewState.viewport.position.x.let { if (it < 0f) it * -1 else it }.dp,
+                            viewState.viewport.position.y.let { if (it < 0f) it * -1 else it }.dp
+                        )
+                        .background(Color.Red.copy(alpha = 0.1f))
+                )
+
+                // View
+                Box(
+                    modifier = Modifier
+                        .offset(
+                            (viewState.viewport.position.x).dp,
+                            (viewState.viewport.position.y).dp
+                        )
+//                        .scale(viewState.viewport.scale)
+//                        .size(5.dp, 5.dp)
+                        .background(Color.Red)
+                ) {
+                    Column {
+//                        Text(viewState.viewport.position.toString())
+                        Text((viewState.viewport.position / viewState.scale).toString())
+                    }
+
+                }
+
+                // View
+                Box(
+                    modifier = Modifier
+                        .offset(
+                            (viewState.viewport.positionWithOffset.x).dp,
+                            (viewState.viewport.positionWithOffset.y).dp
+                        )
+                        .size(
+                            (viewState.viewport.size.width).dp,
+                            (viewState.viewport.size.height).dp
+                        )
+                        .border(1.dp, Color.Black)
+                        .scale(viewState.scale),
+                    contentAlignment = Alignment.Center
+                ) {
+
+                    Box(
+                        modifier = Modifier
+                            .background(Color.Black)
+                            .offset(50.dp, 1.dp)
+                            .size(100.dp, 2.dp)
+                    )
+                    Box(
+                        modifier = Modifier
+                            .background(Color.Black)
+                            .offset(1.dp, 50.dp)
+                            .size(2.dp, 100.dp)
+                    )
+
+                }
+
+
+                // MOUSE
+                val mouse = viewState.mousePositionOnWorld(mousePositionOnBorder)
+
+                Box(
+                    modifier = Modifier
+                        .offset(
+                            (mouse.x).dp,
+                            (mouse.y).dp
+                        )
+                ) {
+
+                    Column {
+
+//                        Text((mouse ).toString())
+                        Text((mouse / viewState.scale).toString())
+                    }
+
+                }
+
+
             }
-
-
-//            // TODO: View Border
-//            Box(
-//                modifier = Modifier
-//                    .offset(
-//                        (viewState.position.x).dp,
-//                        (viewState.position.y).dp
-//                    )
-//                    .size(
-//                        (viewState.size.width * viewState.zoom).dp,
-//                        (viewState.size.height * viewState.zoom).dp
-//                    )
-//                    .border(1.dp, Color.Black)
-//            )
-//
-//            // TODO: Mouse
-//            Box(
-//                modifier = Modifier
-//                    .offset(
-//                        (mousePosition.x * viewState.zoom).dp,
-//                        (mousePosition.y * viewState.zoom).dp
-//                    )
-//                    .size(10.dp)
-//                    .background(Color.Black)
-//            )
-
         }
 
 
@@ -323,6 +384,15 @@ fun GraphView(
                 }) {
                     Icon(Icons.Default.Home, contentDescription = null)
                 }
+
+                Text(
+                    "scale \n" + viewState.scale,
+                    textAlign = TextAlign.Center
+                )
+                Text(
+                    "size \n" + viewState.screenSize,
+                    textAlign = TextAlign.Center
+                )
             }
 
         }
@@ -354,7 +424,12 @@ inline fun drawLayout(viewState: ViewState, content: @Composable () -> Unit) {
 
     // draw Layer
     Box(
-        Modifier.offset(viewState.worldOffsetX.dp, viewState.worldOffsetY.dp)
+        Modifier
+            // TODO: set by viewport position
+            .offset(
+                -viewState.worldOffset.x.dp,
+                -viewState.worldOffset.y.dp
+            )
     ) {
 
         content()
@@ -371,30 +446,90 @@ inline fun drawLayout(viewState: ViewState, content: @Composable () -> Unit) {
 //}
 
 
-data class ViewState(val centerWorldOffset: Offset, var screenSize: IntSize, val showScale: Float) {
+data class ViewState(val worldOffset: Offset, var screenSize: IntSize, val scale: Float) {
+//    inline fun positionOnScreenWithScale(mousePositionOnBorder: Offset): Offset {
+//
+//        val screenOffsetWithScale = Offset(screenXOffsetWithScale, screenYOffsetWithScale)
+//
+//        val offsetHalfScreenWithScale = Offset((halfScreenX * showScale), (halfScreenY * showScale))
+//
+//        return mousePositionOnBorder
+//            .times(showScale)
+//            .plus(screenOffsetWithScale)
+//            .minus(offsetHalfScreenWithScale)
+//    }
 
+    // TODO: work with scale
+    fun mousePositionOnWorld(mousePositionOnBorder: Offset) =
+        (mousePositionOnBorder + worldOffset)
+
+    val viewport = Viewport(worldOffset, screenSize.toSize(), scale)
+
+//    val screenXOffsetWithScale
+//        get() = (screenSize.width - screenWidthWithScale) / 2
+//    val screenYOffsetWithScale
+//        get() = (screenSize.height - screenHeightWithScale) / 2
+
+
+//    val screenWidthWithScale
+//        get() = screenSize.width * scale
+//    val screenHeightWithScale
+//        get() = screenSize.height * scale
 
 //    val screen = ScreenTemp(centerWorldOffset, screenSize)
 //    val camera = CameraTemp(centerWorldOffset, Offset.Zero, showScale)
 
-    val worldOffsetX get() = -centerWorldOffset.x + halfScreenX
-    val worldOffsetY get() = -centerWorldOffset.y + halfScreenY
+//    val worldOffsetX get() = -worldOffset.x
+
+    //    + halfScreenX
+//    val worldOffsetY get() = -worldOffset.y
+//    + halfScreenY
 
     val halfScreenX get() = screenSize.width / 2
     val halfScreenY get() = screenSize.height / 2
 
 
-    val viewYRange get() = (centerWorldOffset.y..(screenSize.height + centerWorldOffset.y))
-    val viewYRangeInt get() = ((centerWorldOffset.y - halfScreenY).toInt()..(screenSize.height - halfScreenY + centerWorldOffset.y).toInt())
-    val viewXRange get() = (centerWorldOffset.x..(screenSize.width + centerWorldOffset.x))
-    val viewXRangeInt get() = ((centerWorldOffset.x - halfScreenX).toInt()..(screenSize.width - halfScreenX + centerWorldOffset.x).toInt())
+    val viewYRange get() = (worldOffset.y..(screenSize.height + worldOffset.y))
+    val viewYRangeInt get() = ((worldOffset.y - halfScreenY).toInt()..(screenSize.height - halfScreenY + worldOffset.y).toInt())
+    val viewXRange get() = (worldOffset.x..(screenSize.width + worldOffset.x))
+    val viewXRangeInt get() = ((worldOffset.x - halfScreenX).toInt()..(screenSize.width - halfScreenX + worldOffset.x).toInt())
 
 
-    val xStartView get() = centerWorldOffset.x
-    val xEndView get() = centerWorldOffset.x + screenSize.width
+    val xStartView get() = worldOffset.x
+    val xEndView get() = worldOffset.x + screenSize.width
 
-    val yStartView get() = centerWorldOffset.y
-    val yEndView get() = centerWorldOffset.y + screenSize.height
+    val yStartView get() = worldOffset.y
+    val yEndView get() = worldOffset.y + screenSize.height
+
+}
+
+class Viewport(val worldOffset: Offset, val screenSize: Size, val scale: Float) {
+
+    //    var offset: Offset
+    val position: Offset
+        get() {
+
+            val halfSize = (screenSize) / 2f
+
+            return Offset(worldOffset.x + halfSize.width, worldOffset.y + halfSize.height)
+
+        }
+
+    val positionWithOffset: Offset
+        get() {
+
+            val size = if (scale < 1f) screenSize * scale else screenSize
+
+            val halfSize = (size / 2f).let { Offset(it.width, it.height) }
+
+            return (position - halfSize)
+
+
+        }
+
+    val size
+        get() = screenSize * scale
+
 
 }
 
@@ -424,7 +559,6 @@ class GraphContentScope(val viewState: ViewState) {
     @Composable
     inline fun item(item: GraphItem) {
 
-
         Box(
             modifier = Modifier
 //                .offset(
@@ -437,10 +571,14 @@ class GraphContentScope(val viewState: ViewState) {
 //                )
 
                 .offset(
-                    x = (item.position.x * viewState.showScale).dp,
-                    y = (item.position.y * viewState.showScale).dp
+                    x = (item.position.x * viewState.scale).dp,
+                    y = (item.position.y * viewState.scale).dp
                 )
-                .scale(viewState.showScale)
+//                .offset(
+//                    x = (item.position.x).dp,
+//                    y = (item.position.y).dp
+//                )
+                .scale(viewState.scale)
                 .size(10.dp)
                 .background(Color.Gray)
         )
