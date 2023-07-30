@@ -6,8 +6,6 @@ import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -42,23 +40,39 @@ import androidx.compose.ui.unit.toSize
 
 const val RepeatOffset = 50f
 
+@Composable
+inline fun rememberInteractiveState() = remember { InteractiveState() }
+
+data class InteractiveState(
+    var scale: MutableState<Float> = mutableStateOf(1f),
+    var offsetX: MutableState<Float> = mutableStateOf(0f),
+    var offsetY: MutableState<Float> = mutableStateOf(0f),
+)
+
+// state
+//
+
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun InteractiveBox(
-    onViewClick: (position: Offset, ViewState) -> Unit,
+    state: InteractiveState = rememberInteractiveState(),
+    onViewClick: (position: Offset, ViewState) -> Unit = { _, _ -> },
     content: @Composable (ViewState) -> Unit = {},
 ) {
 
+//    var state by remember(interactiveState) { mutableStateOf(interactiveState) }
+
     var mousePositionOnBorder by remember { mutableStateOf(Offset.Zero) }
-    var scale by remember { mutableStateOf(1f) }
-    var offsetX by remember { mutableStateOf(0f) }
-    var offsetY by remember { mutableStateOf(0f) }
+//    var scale by remember(state) { mutableStateOf(state.scale) }
+//    var offsetX by remember(state) { mutableStateOf(state.offsetX) }
+//    var offsetY by remember(state) { mutableStateOf(state.offsetY) }
+
     var screenSize by remember { mutableStateOf(IntSize(1, 1)) }
 
 
-    val scaleAnimate by animateFloatAsState(scale)
-    val offsetXAnimate by animateFloatAsState(offsetX)
-    val offsetYAnimate by animateFloatAsState(offsetY)
+    val scaleAnimate by animateFloatAsState(state.scale.value)
+    val offsetXAnimate by animateFloatAsState(state.offsetX.value)
+    val offsetYAnimate by animateFloatAsState(state.offsetY.value)
 
     // Center of World:: Center
     val viewState = ViewState(
@@ -78,18 +92,19 @@ fun InteractiveBox(
             modifier = Modifier
                 .pointerInput(Unit) {
                     detectTransformGestures { _, pan, zoom, _ ->
-                        // Zoom
-                        scale *= zoom
-                        // Move
-                        offsetX -= pan.x / scale
-                        offsetY -= pan.y / scale
+                        state.apply {
+                            scale.value *= zoom
+
+                            offsetX.value -= pan.x / scale.value
+                            offsetY.value -= pan.y / scale.value
+                        }
                     }
                 }
                 .onMouseScroll { scrollDelta ->
-//                 Zoom with mouse scroll
-                    scale *= 1f - (scrollDelta / 10f)
 
-                    scale = climb(value = scale, min = 0.1f, max = 10f)
+//                    //                 Zoom with mouse scroll
+                    state.scale.value = (state.scale.value * 1f - (scrollDelta / 10f))
+                        .let { climb(value = it, min = 0.1f, max = 10f) }
 
                 }
                 .onPointerEvent(PointerEventType.Move) {
@@ -189,20 +204,23 @@ fun InteractiveBox(
         ) {
 
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                IconButton(onClick = { scale += 0.25f }) {
-                    Icon(Icons.Default.Add, contentDescription = null)
-                }
-
-                IconButton(onClick = { scale -= 0.25f }) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = null)
-                }
-
-                Divider(modifier = Modifier.size(width = 35.dp, height = 2.dp))
+//                IconButton(onClick = { interactiveState.scale += 0.25f }) {
+//                    Icon(Icons.Default.Add, contentDescription = null)
+//                }
+//
+//                IconButton(onClick = { interactiveState.scale -= 0.25f }) {
+//                    Icon(Icons.Default.ArrowBack, contentDescription = null)
+//                }
+//
+//                Divider(modifier = Modifier.size(width = 35.dp, height = 2.dp))
 
                 IconButton(onClick = {
-                    scale = 1f
-                    offsetX = 0f
-                    offsetY = 0f
+                    state.apply {
+                        scale.value = 1f
+                        offsetX.value = 0f
+                        offsetY.value = 0f
+                    }
+
                 }) {
                     Icon(Icons.Default.Home, contentDescription = null)
                 }
