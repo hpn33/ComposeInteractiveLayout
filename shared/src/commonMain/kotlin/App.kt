@@ -1,4 +1,5 @@
 import androidx.compose.runtime.Composable
+import inter.example.GraphView
 import inter.example.MapView
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 
@@ -6,7 +7,7 @@ import org.jetbrains.compose.resources.ExperimentalResourceApi
 @Composable
 fun App() {
 
-    MapView()
-
+//    MapView()
+GraphView()
 }
 

@@ -81,9 +81,8 @@ fun InteractiveBox(
         scale = scaleAnimate
     )
 
-
     // Box/Border Layout
-    boxBorder(sizeChange = { screenSize = it }) {
+    boxBorder(frameSizeChange = { screenSize = it }) {
 
 //        GuildLineBackground(viewState)
 
@@ -103,14 +102,15 @@ fun InteractiveBox(
                 .onMouseScroll { scrollDelta ->
 
 //                    //                 Zoom with mouse scroll
-                    state.scale.value = (state.scale.value * 1f - (scrollDelta / 10f))
-                        .let { climb(value = it, min = 0.1f, max = 10f) }
+                    state.scale.value =
+                        (state.scale.value * 1f - (scrollDelta / 10f))
+                            .let { climb(value = it, min = 0.1f, max = 10f) }
 
                 }
                 .onPointerEvent(PointerEventType.Move) {
                     mousePositionOnBorder = it.changes.first().position
                 }
-                .onClick {
+                .clickable {
                     onViewClick(mousePositionOnBorder, viewState)
                 }
                 .fillMaxSize()
@@ -121,18 +121,21 @@ fun InteractiveBox(
 
                 content(viewState)
 
-//                 ViewPort Position
+
+                val position = viewState.scaledPosition
+
+                // ViewPort Position
                 Box(
                     modifier = Modifier
                         .offset(
-                            (viewState.viewport.position.x * viewState.scale).dp,
-                            (viewState.viewport.position.y * viewState.scale).dp
+                            (position.x).dp,
+                            (position.y).dp
                         )
                         .background(Color.Red.copy(alpha = .1f))
                 ) {
                     Column {
                         Text("Viewport")
-                        Text((viewState.viewport.position).toString())
+                        Text((position).toString())
                     }
 
                 }
@@ -141,18 +144,8 @@ fun InteractiveBox(
                 // MOUSE
                 val mouse = viewState.viewport.mousePositionOnWorld(mousePositionOnBorder)
 
-                Box(
-                    modifier = Modifier
-                        .offset(
-                            (mouse.x * viewState.scale).dp,
-                            (mouse.y * viewState.scale).dp
-                        )
-                ) {
-                    Column {
-
-                        Text((mouse).toString())
-
-                    }
+                Box(modifier = Modifier.offset((mouse.x).dp, (mouse.y).dp)) {
+                    Text((mouse).toString())
                 }
 
                 Box(modifier = Modifier.background(Color.Yellow.copy(alpha = .1f))) {
@@ -163,39 +156,45 @@ fun InteractiveBox(
             }
         }
 
-        // center of screen view
-        Box(
-            modifier = Modifier
-//                )
-                .offset(
-                    ((viewState.screenSize.width - (viewState.viewport.size.width * viewState.scale)) / 2f).dp,
-                    ((viewState.screenSize.height - (viewState.viewport.size.height * viewState.scale)) / 2f).dp
-                )
-                .size(
-                    (viewState.viewport.size.width * viewState.scale).dp,
-                    (viewState.viewport.size.height * viewState.scale).dp
-                )
-                .border(1.dp, Color.Black)
-//            ,
-                .scale(viewState.scale),
-            contentAlignment = Alignment.Center
-        ) {
+        viewportLayout(viewState) {
 
+
+            // center of screen view
             Box(
                 modifier = Modifier
-                    .background(Color.Black)
-                    .offset(50.dp, 1.dp)
-                    .size(100.dp, 2.dp)
-            )
-            Box(
-                modifier = Modifier
-                    .background(Color.Black)
-                    .offset(1.dp, 50.dp)
-                    .size(2.dp, 100.dp)
-            )
+//                )
+                    .offset(
+                        ((viewState.screenSize.width - (viewState.viewport.size.width /* * viewState.scale*/)) / 2f).dp,
+                        ((viewState.screenSize.height - (viewState.viewport.size.height /* * viewState.scale*/)) / 2f).dp
+                    )
+                    .size(
+                        (viewState.viewport.size.width /* * viewState.scale*/).dp,
+                        (viewState.viewport.size.height/* * viewState.scale*/).dp
+                    )
+                    .border(1.dp, Color.Black)
+//            ,
+//                    .scale(viewState.scale)
+                ,
+                contentAlignment = Alignment.Center
+            ) {
+
+                Box(
+                    modifier = Modifier
+                        .background(Color.Black)
+                        .offset(50.dp, 1.dp)
+                        .size(100.dp, 2.dp)
+                )
+                Box(
+                    modifier = Modifier
+                        .background(Color.Black)
+                        .offset(1.dp, 50.dp)
+                        .size(2.dp, 100.dp)
+                )
+
+            }
+
 
         }
-
 
         // Control Panel Layout
         Box(
@@ -237,8 +236,6 @@ fun InteractiveBox(
 
         }
     }
-
-
 }
 
 @Composable
@@ -410,11 +407,13 @@ private fun GuildLineBackground(viewState: ViewState) {
 @Composable
 fun viewportLayout(viewState: ViewState, function: @Composable () -> Unit) {
 
-    val offset = viewState.viewport.centerOffset
+//    val offset = viewState.viewport.centerOffset
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .offset(offset.x.dp, offset.y.dp)
+//            .offset(offset.x.dp, offset.y.dp)
+            .wrapContentSize(unbounded = true)
+            .scale(viewState.scale)
     ) {
         function()
     }
@@ -422,8 +421,8 @@ fun viewportLayout(viewState: ViewState, function: @Composable () -> Unit) {
 
 @Composable
 inline fun boxBorder(
-    crossinline sizeChange: (IntSize) -> Unit,
-    function: @Composable () -> Unit,
+    crossinline frameSizeChange: (IntSize) -> Unit,
+    content: @Composable () -> Unit,
 ) {
 
     Box(
@@ -431,10 +430,10 @@ inline fun boxBorder(
             .fillMaxSize()
             .clip(RectangleShape)
             .onGloballyPositioned { layoutCoordinates ->
-                sizeChange(layoutCoordinates.size)
+                frameSizeChange(layoutCoordinates.size)
             }
     ) {
-        function()
+        content()
     }
 }
 
@@ -442,11 +441,13 @@ inline fun boxBorder(
 inline fun worldBaseLayout(viewState: ViewState, content: @Composable () -> Unit) {
 
 
-    val position = -viewState.viewport.position * viewState.viewport.scale
-
+    val scaledWorldOffset = viewState.viewport.worldOffset * viewState.scale
     // draw Layer
     Box(
-        Modifier.offset(position.x.dp, position.y.dp)
+        Modifier
+            .offset(scaledWorldOffset.x.dp, scaledWorldOffset.y.dp),
+        contentAlignment = Alignment.Center
+
     ) {
 
         content()
@@ -497,7 +498,15 @@ data class ViewState(
 //    val yStartView get() = environmentOffset.y
 //    val yEndView get() = environmentOffset.y + screenSize.height
 
+
+    val scaledOffset
+        get() = environmentOffset * scale
+
+    val scaledPosition
+        get() = -environmentOffset * scale
+
 }
+
 
 data class Viewport(
     val worldOffset: Offset,
@@ -508,9 +517,11 @@ data class Viewport(
     fun mousePositionOnWorld(mousePositionOnBorder: Offset): Offset {
         val halfScreen = Offset(screenSize.width, screenSize.height) * 0.5f
 
-        val fixedMousePosition = (mousePositionOnBorder - halfScreen) / scale
+        val dividedMousePosition = (mousePositionOnBorder - halfScreen) / scale
 
-        return (fixedMousePosition - worldOffset)
+        val scaledOffset = worldOffset * scale
+
+        return (dividedMousePosition - scaledOffset)
     }
 
     inline val size get() = screenSize

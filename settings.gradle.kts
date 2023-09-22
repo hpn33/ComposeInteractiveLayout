@@ -1,4 +1,4 @@
-rootProject.name = "MyApplication"
+rootProject.name = "InteractiveLayout"
 
 include(":androidApp")
 include(":shared")
@@ -25,7 +25,7 @@ pluginManagement {
 
         id("org.jetbrains.compose").version(composeVersion)
 
-        id("app.cash.sqldelight") version (extra["sqldelight.version"] as String)
+//        id("app.cash.sqldelight") version (extra["sqldelight.version"] as String)
 
     }
 }

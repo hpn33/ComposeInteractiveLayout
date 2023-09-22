@@ -12,7 +12,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import inter.InteractiveBox
 import inter.rememberInteractiveState
@@ -34,9 +33,8 @@ fun MapView() {
         val interactiveController = rememberInteractiveState()
         var selectedStateIndex by remember { mutableStateOf(-1) }
 
-        println(selectedStateIndex)
+
         LaunchedEffect(selectedStateIndex) {
-            println("here")
             if (selectedStateIndex != -1) {
                 interactiveController.apply {
                     scale.value = 1.1f
@@ -61,11 +59,12 @@ fun MapView() {
             Box(
                 modifier = Modifier
 //                    .scrollable()
-                    .wrapContentSize(Alignment.TopStart, unbounded = true)
+//                    .wrapContentSize(Alignment.TopStart, unbounded = true)
                     .background(Color.LightGray)
 //                    .size((500 * it.scale).dp)
-                    .scale(it.scale),
-                contentAlignment = Alignment.TopStart
+//                    .scale(it.scale),
+                ,
+//                contentAlignment = Alignment.TopStart
             ) {
 
                 // 1 2 10

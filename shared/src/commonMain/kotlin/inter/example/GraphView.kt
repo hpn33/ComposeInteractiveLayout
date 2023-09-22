@@ -1,6 +1,7 @@
 package inter.example
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
@@ -134,49 +135,29 @@ class GraphContentScope(val viewState: ViewState) {
     inline fun connection(connectionItem: GraphItemConnection): GraphItemConnection {
 
 
-        val scale = viewState.scale
-//        val (start, target) =
-        val start = connectionItem.start.position * scale
-        val target = connectionItem.target.position * scale
+        val start = connectionItem.start.position
+        val target = connectionItem.target.position
 
-        val point = Offset(
+
+        val ltPoint = Offset(
             if (start.x < target.x) start.x else target.x,
             if (start.y < target.y) start.y else target.y,
         )
 
         val size = (target - start).let { Size(it.x.absoluteValue, it.y.absoluteValue) }
 
-        // Start
-//        Box(
-//            modifier = Modifier
-//                .offset(point.x.dp, point.y.dp)
-//                .size(10.dp)
-//                .background(Color.Red)
-//
-//
-//        ) { }
-
-        // End
-//        Box(
-//            modifier = Modifier
-//                .offset((point.x + size.width).dp, (point.y + size.height).dp)
-//                .size(10.dp)
-//                .background(Color.Red)
-//
-//
-//        ) { }
+        val halfSize = size / 2f
 
 
-        val lineStart = start.let { Offset(it.x - point.x, it.y - point.y) }
-        val lineEnd = target.let { Offset(it.x - point.x, it.y - point.y) }
+        val lineStart = (start - ltPoint).let { Offset(it.x, it.y) }
+        val lineEnd = (target - ltPoint).let { Offset(it.x, it.y) }
 
-//        println(lineStart)
-//        println(lineEnd)
 
         Canvas(
             modifier = Modifier
-                .offset(point.x.dp, point.y.dp)
+                .offset((ltPoint.x + halfSize.width).dp, (ltPoint.y + halfSize.height).dp)
                 .size(size.width.dp, size.height.dp)
+//                .background(Color.LightGray.copy(.5f))
         ) {
 
             drawLine(
@@ -186,15 +167,6 @@ class GraphContentScope(val viewState: ViewState) {
             )
 
         }
-
-//        Box(
-//            modifier = Modifier
-//                .offset(point.x.dp, point.y.dp)
-//                .size(size.width.dp, size.height.dp)
-//                .background(Color.Yellow.copy(alpha = 0.1f))
-//
-//
-//        ) { }
 
 
         return connectionItem
@@ -236,15 +208,15 @@ class GraphContentScope(val viewState: ViewState) {
 //                )
 
 //                .background(Color.Gray.copy(alpha = .5f))
-                .offset(
-                    x = (item.position.x * viewState.scale).dp,
-                    y = (item.position.y * viewState.scale).dp
-                ),
-//                .background(Color.Gray.copy(alpha = .5f))
 //                .offset(
-//                    x = (item.position.x).dp,
-//                    y = (item.position.y).dp
-//                )
+//                    x = (item.position.x * viewState.scale).dp,
+//                    y = (item.position.y * viewState.scale).dp
+//                ),
+//                .background(Color.Gray.copy(alpha = .5f))
+                .offset(
+                    x = (item.position.x).dp,
+                    y = (item.position.y).dp
+                )
 //                .size(10.dp),
 //            contentAlignment = Alignment.TopStart
         )
