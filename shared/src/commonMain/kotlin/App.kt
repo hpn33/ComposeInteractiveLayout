@@ -7,7 +7,7 @@ import org.jetbrains.compose.resources.ExperimentalResourceApi
 @Composable
 fun App() {
 
-//    MapView()
-GraphView()
+    MapView()
+//GraphView()
 }
 

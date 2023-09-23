@@ -1,6 +1,7 @@
 package inter
 
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateIntSizeAsState
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
@@ -45,9 +46,10 @@ const val RepeatOffset = 50f
 inline fun rememberInteractiveState() = remember { InteractiveState() }
 
 data class InteractiveState(
-    var scale: MutableState<Float> = mutableStateOf(1f),
-    var offsetX: MutableState<Float> = mutableStateOf(0f),
-    var offsetY: MutableState<Float> = mutableStateOf(0f),
+    val scale: MutableState<Float> = mutableStateOf(1f),
+    val offsetX: MutableState<Float> = mutableStateOf(0f),
+    val offsetY: MutableState<Float> = mutableStateOf(0f),
+    val screenSize: MutableState<IntSize> = mutableStateOf(IntSize(1, 1))
 )
 
 // state
@@ -61,31 +63,26 @@ fun InteractiveBox(
     content: @Composable (ViewState) -> Unit = {},
 ) {
 
-//    var state by remember(interactiveState) { mutableStateOf(interactiveState) }
-
     var mousePositionOnBorder by remember { mutableStateOf(Offset.Zero) }
-//    var scale by remember(state) { mutableStateOf(state.scale) }
-//    var offsetX by remember(state) { mutableStateOf(state.offsetX) }
-//    var offsetY by remember(state) { mutableStateOf(state.offsetY) }
 
-    var screenSize by remember { mutableStateOf(IntSize(1, 1)) }
-
+//    var screenSize by remember { state.screenSize }
+    val screenSizeAnimate by animateIntSizeAsState(state.screenSize.value)
 
     val scaleAnimate by animateFloatAsState(state.scale.value)
     val offsetXAnimate by animateFloatAsState(state.offsetX.value)
     val offsetYAnimate by animateFloatAsState(state.offsetY.value)
 
-    // Center of World:: Center
+
     val viewState = ViewState(
         environmentOffset = Offset(-offsetXAnimate, -offsetYAnimate),
-        screenSize = screenSize,
+        screenSize = screenSizeAnimate,
         scale = scaleAnimate
     )
 
 //    println(viewState)
 
     // Box/Border Layout
-    boxBorder(frameSizeChange = { screenSize = it }) {
+    boxBorder(frameSizeChange = { state.screenSize.value = it }) {
 
 //        GuildLineBackground(viewState)
 
@@ -184,7 +181,7 @@ fun InteractiveBox(
                 ) {
                     Column {
                         Text("Viewport")
-                        Text((viewState.position + viewState.halfScreenOffset).toString())
+                        Text((viewState.position).toString())
                     }
 
                 }

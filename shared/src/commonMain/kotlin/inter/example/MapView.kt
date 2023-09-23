@@ -1,5 +1,6 @@
 package inter.example
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -23,6 +24,33 @@ import org.jetbrains.compose.resources.painterResource
 fun MapView() {
 
 
+    val interactiveController = rememberInteractiveState()
+    var selectedStateIndex by remember { mutableStateOf(-1) }
+
+    LaunchedEffect(selectedStateIndex) {
+        if (selectedStateIndex != -1) {
+            interactiveController.apply {
+                val halfScreenSize = interactiveController.screenSize.value / 2
+
+                scale.value = 1.8f
+                offsetX.value = 1470f - halfScreenSize.width
+                offsetY.value = 1745f - halfScreenSize.height
+            }
+        } else {
+            interactiveController.apply {
+                scale.value = 1f
+            }
+        }
+    }
+
+    val alphaAnimation by animateFloatAsState(
+        (interactiveController.scale.value)
+            .let { if (it >= 1f) ((it / 10f) - .1f - 1f) * -1 else 1f }
+            .let { if (it >= 1f) it else .1f }
+    )
+
+
+
     Box(
         modifier = Modifier
             .background(Color.Gray)
@@ -30,40 +58,20 @@ fun MapView() {
             .background(Color.White)
     ) {
 
-        val interactiveController = rememberInteractiveState()
-        var selectedStateIndex by remember { mutableStateOf(-1) }
-
-
-        LaunchedEffect(selectedStateIndex) {
-            if (selectedStateIndex != -1) {
-                interactiveController.apply {
-                    scale.value = 1.1f
-                    offsetX.value = 1422f
-                    offsetY.value = 1702f
-                }
-            } else {
-                interactiveController.apply {
-                    scale.value = 1f
-                }
-            }
-        }
 
 //        rememberScrollState()
 
 
-        InteractiveBox(
-            interactiveController
-        ) {
+        InteractiveBox(interactiveController) {
 
 
             Box(
                 modifier = Modifier
 //                    .scrollable()
 //                    .wrapContentSize(Alignment.TopStart, unbounded = true)
-                    .background(Color.LightGray)
+                    .background(Color.LightGray),
 //                    .size((500 * it.scale).dp)
 //                    .scale(it.scale),
-                ,
 //                contentAlignment = Alignment.TopStart
             ) {
 
@@ -79,11 +87,7 @@ fun MapView() {
                     contentDescription = null,
                     modifier = Modifier
 //                        .size((500 * it.scale).dp)
-                        .alpha(
-                            (it.scale)
-                                .let { if (it >= 1f) ((it / 10f) - .1f - 1f) * -1 else 1f }
-                                .let { if (it >= 1f) it else .1f }
-                        )
+                        .alpha(alphaAnimation)
                 )
 
 //tehran.png
@@ -104,7 +108,7 @@ fun MapView() {
                         Modifier
                             .clip(RoundedCornerShape(100))
                             .clickable {
-                                println("Click")
+
                                 selectedStateIndex = if (selectedStateIndex == 0) -1 else 0
 
                             }
