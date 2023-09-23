@@ -122,7 +122,8 @@ fun InteractiveBox(
                 content(viewState)
 
 
-                val position = viewState.scaledPosition
+//                val position = viewState.scaledPosition
+                val position = viewState.position
 
                 // ViewPort Position
                 Box(
@@ -441,11 +442,14 @@ inline fun boxBorder(
 inline fun worldBaseLayout(viewState: ViewState, content: @Composable () -> Unit) {
 
 
-    val scaledWorldOffset = viewState.viewport.worldOffset * viewState.scale
+//    val scaledWorldOffset = viewState.viewport.worldOffset * viewState.scale
+//    val scaledWorldOffset = viewState.scaledOffset
+    val offset = viewState.offset
+
     // draw Layer
     Box(
         Modifier
-            .offset(scaledWorldOffset.x.dp, scaledWorldOffset.y.dp),
+            .offset(offset.x.dp, offset.y.dp),
         contentAlignment = Alignment.Center
 
     ) {
@@ -499,6 +503,11 @@ data class ViewState(
 //    val yEndView get() = environmentOffset.y + screenSize.height
 
 
+    val position
+        get() = -environmentOffset
+    val offset
+        get() = environmentOffset
+
     val scaledOffset
         get() = environmentOffset * scale
 
@@ -519,7 +528,8 @@ data class Viewport(
 
         val dividedMousePosition = (mousePositionOnBorder - halfScreen) / scale
 
-        val scaledOffset = worldOffset * scale
+//        val scaledOffset = worldOffset * scale
+        val scaledOffset = worldOffset //* scale
 
         return (dividedMousePosition - scaledOffset)
     }
