@@ -110,9 +110,12 @@ fun InteractiveBox(
                 .onPointerEvent(PointerEventType.Move) {
                     mousePositionOnBorder = it.changes.first().position
                 }
-                .clickable {
+                .onClick {
                     onViewClick(mousePositionOnBorder, viewState)
+
                 }
+//                .clickable {
+//                }
                 .fillMaxSize()
         )
 
