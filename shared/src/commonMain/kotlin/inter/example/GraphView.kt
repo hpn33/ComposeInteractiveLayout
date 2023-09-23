@@ -155,7 +155,7 @@ class GraphContentScope(val viewState: ViewState) {
 
         Canvas(
             modifier = Modifier
-                .offset((ltPoint.x + halfSize.width).dp, (ltPoint.y + halfSize.height).dp)
+                .offset((ltPoint.x/* + halfSize.width*/).dp, (ltPoint.y /*+ halfSize.height*/).dp)
                 .size(size.width.dp, size.height.dp)
 //                .background(Color.LightGray.copy(.5f))
         ) {

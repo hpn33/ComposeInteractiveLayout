@@ -22,6 +22,7 @@ import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -81,6 +82,8 @@ fun InteractiveBox(
         scale = scaleAnimate
     )
 
+//    println(viewState)
+
     // Box/Border Layout
     boxBorder(frameSizeChange = { screenSize = it }) {
 
@@ -120,26 +123,6 @@ fun InteractiveBox(
             worldBaseLayout(viewState) {
 
                 content(viewState)
-
-
-//                val position = viewState.scaledPosition
-                val position = viewState.position
-
-                // ViewPort Position
-                Box(
-                    modifier = Modifier
-                        .offset(
-                            (position.x).dp,
-                            (position.y).dp
-                        )
-                        .background(Color.Red.copy(alpha = .1f))
-                ) {
-                    Column {
-                        Text("Viewport")
-                        Text((position).toString())
-                    }
-
-                }
 
 
                 // MOUSE
@@ -191,6 +174,20 @@ fun InteractiveBox(
                         .offset(1.dp, 50.dp)
                         .size(2.dp, 100.dp)
                 )
+
+
+                // ViewPort Position
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .background(Color.Red.copy(alpha = .1f))
+                ) {
+                    Column {
+                        Text("Viewport")
+                        Text((viewState.position + viewState.halfScreenOffset).toString())
+                    }
+
+                }
 
             }
 
@@ -406,17 +403,20 @@ private fun GuildLineBackground(viewState: ViewState) {
 }
 
 @Composable
-fun viewportLayout(viewState: ViewState, function: @Composable () -> Unit) {
+inline fun viewportLayout(viewState: ViewState, content: @Composable () -> Unit) {
 
-//    val offset = viewState.viewport.centerOffset
+//    val offset = viewState.offset
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-//            .offset(offset.x.dp, offset.y.dp)
             .wrapContentSize(unbounded = true)
             .scale(viewState.scale)
+//            .offset(offset.x.dp, offset.y.dp)
     ) {
-        function()
+
+        content()
+
     }
 }
 
@@ -442,16 +442,18 @@ inline fun boxBorder(
 inline fun worldBaseLayout(viewState: ViewState, content: @Composable () -> Unit) {
 
 
-//    val scaledWorldOffset = viewState.viewport.worldOffset * viewState.scale
-//    val scaledWorldOffset = viewState.scaledOffset
-    val offset = viewState.offset
+    var size by remember { mutableStateOf(IntSize.Zero) }
+
+    val offset = viewState.offset + (size / 2).let { Offset(it.width.toFloat(), it.height.toFloat()) }
 
     // draw Layer
     Box(
         Modifier
-            .offset(offset.x.dp, offset.y.dp),
-        contentAlignment = Alignment.Center
-
+            .offset(offset.x.dp, offset.y.dp)
+//            .background(Color.LightGray)
+            .onSizeChanged {
+                size = it
+            }
     ) {
 
         content()
@@ -472,15 +474,17 @@ data class ViewState(
         scale
     )
 
-    val halfScreenX get() = screenSize.width / 2
-    val halfScreenY get() = screenSize.height / 2
+    val halfScreen get() = screenSize / 2
+    val halfScreenOffset get() = halfScreen.let { Offset(it.width.toFloat(), it.height.toFloat()) }
+//    val halfScreenX get() = screenSize.width / 2
+//    val halfScreenY get() = screenSize.height / 2
 
 
     //    val viewYRange get() = (environmentOffset.y..(screenSize.height + environmentOffset.y))
     val viewYRangeInt: IntRange
         get() {
             val centerPoint = -environmentOffset.y
-            val sideRange = halfScreenY / scale
+            val sideRange = halfScreen.height / scale
 
             return ((-sideRange + centerPoint).toInt()..(centerPoint + sideRange).toInt())
         }
@@ -490,7 +494,7 @@ data class ViewState(
     val viewXRangeInt: IntRange
         get() {
             val centerPoint = -environmentOffset.x
-            val sideRange = halfScreenX / scale
+            val sideRange = halfScreen.width / scale
 
             return ((-sideRange + centerPoint).toInt()..(centerPoint + sideRange).toInt())
         }
@@ -506,7 +510,7 @@ data class ViewState(
     val position
         get() = -environmentOffset
     val offset
-        get() = environmentOffset
+        get() = environmentOffset - halfScreenOffset
 
     val scaledOffset
         get() = environmentOffset * scale
@@ -524,14 +528,12 @@ data class Viewport(
 ) {
 
     fun mousePositionOnWorld(mousePositionOnBorder: Offset): Offset {
-        val halfScreen = Offset(screenSize.width, screenSize.height) * 0.5f
+        val halfScreen = Offset(screenSize.width, screenSize.height) / 2f
 
         val dividedMousePosition = (mousePositionOnBorder - halfScreen) / scale
 
-//        val scaledOffset = worldOffset * scale
-        val scaledOffset = worldOffset //* scale
 
-        return (dividedMousePosition - scaledOffset)
+        return (dividedMousePosition - worldOffset + halfScreen)
     }
 
     inline val size get() = screenSize
